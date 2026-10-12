@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Control de Inventario</title>
+<style>
+  .marca{
+  background:#dc2626;
+  color:#fff;
+  text-align:center;
+  font-size:1.3rem;
+  font-weight:700;
+  letter-spacing:.5px;
+  padding:12px 16px;
+  border-radius:12px;
+  margin-bottom:8px;
+}
+:root{--bg:#f4f6f9;--card:#fff;--tx:#1b2430;--mu:#6b7686;--pr:#2563eb;--ok:#16a34a;--er:#dc2626;--wa:#d97706;--bd:#e2e6ec;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10151c;--card:#1a222d;--tx:#e8edf3;--mu:#93a0b1;--pr:#4f8bff;--ok:#34d399;--er:#f87171;--wa:#fbbf24;--bd:#2b3644}}
+:root[data-theme="dark"]{--bg:#10151c;--card:#1a222d;--tx:#e8edf3;--mu:#93a0b1;--pr:#4f8bff;--ok:#34d399;--er:#f87171;--wa:#fbbf24;--bd:#2b3644}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.4}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.5rem;margin:8px 0 4px;text-align:center}
+.sub{color:var(--mu);text-align:center;margin:0 0 24px}
+.menu{display:grid;gap:14px}
+.big{display:flex;align-items:center;gap:16px;padding:22px;border:1px solid var(--bd);border-radius:14px;background:var(--card);color:var(--tx);font-size:1.15rem;font-weight:600;cursor:pointer;text-align:left;width:100%}
+.big:hover{border-color:var(--pr)}
+.big span.i{font-size:2rem}
+.big small{display:block;font-weight:400;color:var(--mu);font-size:.85rem}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px;margin-top:12px}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.back{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:8px 12px;cursor:pointer;font-size:.95rem}
+.top h2{margin:0;font-size:1.25rem}
+label{display:block;font-size:.85rem;color:var(--mu);margin:12px 0 4px}
+input{width:100%;padding:11px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font-size:1rem}
+input:focus{outline:2px solid var(--pr);outline-offset:0}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{margin-top:16px;width:100%;padding:13px;border:0;border-radius:10px;background:var(--pr);color:#fff;font-size:1rem;font-weight:600;cursor:pointer}
+.btn.red{background:var(--er)}
+.msg{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:.92rem;display:none}
+.msg.ok{display:block;background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.msg.er{display:block;background:color-mix(in srgb,var(--er) 15%,transparent);color:var(--er)}
+.hint{font-size:.85rem;color:var(--mu);margin-top:6px;min-height:1.2em}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.93rem}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--bd);white-space:nowrap}
+th{color:var(--mu);font-weight:600;font-size:.8rem;text-transform:uppercase}
+td.n,th.n{text-align:right}
+.low{color:var(--wa);font-weight:700}.zero{color:var(--er);font-weight:700}
+.stats{display:flex;gap:16px;color:var(--mu);font-size:.88rem;margin:10px 0 0;flex-wrap:wrap}
+.empty{text-align:center;color:var(--mu);padding:22px 0}
+h3{font-size:1rem;margin:0 0 8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="marca">Despensa Soltys</div>
+
+<!-- MENÚ -->
+<section id="v-menu">
+  <h1> Control de Inventario</h1>
+  <p class="sub">¿Qué desea hacer?</p>
+  <div class="menu">
+    <button class="big" data-go="reg"><span class="i"></span><span>Registrar nuevos productos<small>Ingresar productos o sumar stock a uno existente</small></span></button>
+    <button class="big" data-go="inv"><span class="i"></span><span>Ver el inventario<small>Buscar por nombre o por código</small></span></button>
+    <button class="big" data-go="ven"><span class="i"></span><span>Restar (registrar venta)<small>Descontar unidades vendidas</small></span></button>
+  </div>
+</section>
+
+<!-- REGISTRAR -->
+<section id="v-reg" hidden>
+  <div class="top"><button class="back" data-go="menu">← Menú</button><h2>Registrar productos</h2></div>
+  <div class="card">
+    <label for="r-cod">Código (único)</label>
+    <input id="r-cod" autocomplete="off" placeholder="Ej: P001">
+    <div class="hint" id="r-hint"></div>
+    <label for="r-nom">Nombre del producto</label>
+    <input id="r-nom" autocomplete="off" placeholder="Ej: Arroz 1kg">
+    <div class="row">
+      <div><label for="r-can">Cantidad que ingresa</label><input id="r-can" type="number" min="1" step="1" inputmode="numeric"></div>
+      <div><label for="r-pre">Precio (opcional)</label><input id="r-pre" type="number" min="0" step="any" inputmode="decimal"></div>
+    </div>
+    <button class="btn" id="r-ok">Guardar ingreso</button>
+    <div class="msg" id="r-msg"></div>
+  </div>
+</section>
+
+<!-- INVENTARIO -->
+<section id="v-inv" hidden>
+  <div class="top"><button class="back" data-go="menu">← Menú</button><h2>Inventario</h2></div>
+  <div class="card">
+    <input id="i-q" placeholder="🔍 Buscar por nombre o código..." autocomplete="off">
+    <div class="stats" id="i-st"></div>
+    <div class="tw" style="margin-top:10px"><table>
+      <thead><tr><th>Código</th><th>Producto</th><th class="n">Stock</th><th class="n">Precio</th></tr></thead>
+      <tbody id="i-tb"></tbody></table></div>
+    <div class="empty" id="i-em" hidden>No se encontraron productos.</div>
+  </div>
+</section>
+
+<!-- VENTA -->
+<section id="v-ven" hidden>
+  <div class="top"><button class="back" data-go="menu">← Menú</button><h2>Registrar venta</h2></div>
+  <div class="card">
+    <label for="v-cod">Código del producto</label>
+    <input id="v-cod" autocomplete="off" placeholder="Ej: P001">
+    <div class="hint" id="v-hint"></div>
+    <label for="v-can">Cantidad vendida</label>
+    <input id="v-can" type="number" min="1" step="1" inputmode="numeric" value="1">
+    <button class="btn red" id="v-ok">Registrar venta</button>
+    <div class="msg" id="v-msg"></div>
+  </div>
+  <div class="card">
+    <h3>Últimas ventas</h3>
+    <div class="tw"><table>
+      <thead><tr><th>Fecha</th><th>Código</th><th>Producto</th><th class="n">Cant.</th></tr></thead>
+      <tbody id="v-tb"></tbody></table></div>
+    <div class="empty" id="v-em">Aún no hay ventas.</div>
+  </div>
+</section>
+
+</div>
+<script>
+(function(){
+  var KEY='inv_productos_v1', KS='inv_ventas_v1';
+  var prods={}, ventas=[];
+  try{prods=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){prods={}}
+  try{ventas=JSON.parse(localStorage.getItem(KS)||'[]')||[]}catch(e){ventas=[]}
+  function save(){
+    try{localStorage.setItem(KEY,JSON.stringify(prods));localStorage.setItem(KS,JSON.stringify(ventas))}catch(e){}
+  }
+  var $=function(id){return document.getElementById(id)};
+  var norm=function(s){return String(s||'').trim().toUpperCase()};
+  var esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+  var money=function(n){return n>0?Number(n).toLocaleString('es',{minimumFractionDigits:0,maximumFractionDigits:2}):'—'};
+
+  function show(v){
+    ['menu','reg','inv','ven'].forEach(function(x){$('v-'+x).hidden=(x!==v)});
+    window.scrollTo(0,0);
+    if(v==='inv')renderInv();
+    if(v==='ven'){renderVen();hint('v')}
+    if(v==='reg'){hint('r')}
+  }
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('[data-go]');if(b)show(b.getAttribute('data-go'));
+  });
+  function msg(id,t,ok){var m=$(id);m.textContent=t;m.className='msg '+(ok?'ok':'er')}
+  function clr(id){$(id).className='msg';$(id).textContent=''}
+
+  // Pista al escribir el código
+  function hint(p){
+    var c=norm($(p+'-cod').value), h=$(p+'-hint'), pr=prods[c];
+    if(!c){h.textContent='';return}
+    if(pr){
+      h.textContent='Existente: '+pr.nombre+' — stock actual: '+pr.stock;
+      if(p==='r'){$('r-nom').value=pr.nombre;$('r-nom').readOnly=true;if(pr.precio&&!$('r-pre').value)$('r-pre').value=pr.precio}
+    }else{
+      h.textContent=p==='r'?'Código nuevo: se creará un producto.':'Código no encontrado.';
+      if(p==='r')$('r-nom').readOnly=false;
+    }
+  }
+  $('r-cod').addEventListener('input',function(){
+    if(!prods[norm($('r-cod').value)]){ if($('r-nom').readOnly){$('r-nom').value=''} }
+    hint('r');
+  });
+  $('v-cod').addEventListener('input',function(){hint('v')});
+
+  // Registrar / sumar
+  $('r-ok').addEventListener('click',function(){
+    var c=norm($('r-cod').value), n=$('r-nom').value.trim(),
+        q=parseInt($('r-can').value,10), p=parseFloat($('r-pre').value)||0;
+    if(!c)return msg('r-msg','Ingrese el código del producto.');
+    if(!n)return msg('r-msg','Ingrese el nombre del producto.');
+    if(!(q>0))return msg('r-msg','Ingrese una cantidad válida (mayor a 0).');
+    if(prods[c]){
+      prods[c].stock+=q; if(p>0)prods[c].precio=p;
+      msg('r-msg','✔ Se sumaron '+q+' unidades a «'+prods[c].nombre+'». Stock total: '+prods[c].stock,true);
+    }else{
+      prods[c]={nombre:n,stock:q,precio:p};
+      msg('r-msg','✔ Producto nuevo registrado: «'+n+'» con '+q+' unidades.',true);
+    }
+    save();
+    ['r-cod','r-nom','r-can','r-pre'].forEach(function(i){$(i).value=''});
+    $('r-nom').readOnly=false;$('r-hint').textContent='';
+    $('r-cod').focus();
+  });
+
+  // Inventario
+  function renderInv(){
+    var q=$('i-q').value.trim().toLowerCase(), tb=$('i-tb'), html='', total=0, uds=0, cnt=0;
+    Object.keys(prods).sort().forEach(function(c){
+      var p=prods[c];
+      if(q && c.toLowerCase().indexOf(q)<0 && p.nombre.toLowerCase().indexOf(q)<0)return;
+      cnt++;uds+=p.stock;
+      var cl=p.stock===0?'zero':(p.stock<=5?'low':'');
+      html+='<tr><td>'+esc(c)+'</td><td>'+esc(p.nombre)+'</td><td class="n '+cl+'">'+p.stock+'</td><td class="n">'+money(p.precio)+'</td></tr>';
+    });
+    tb.innerHTML=html;
+    $('i-em').hidden=cnt>0;
+    $('i-st').innerHTML='<span>Productos: <b>'+cnt+'</b></span><span>Unidades: <b>'+uds+'</b></span><span class="low">Stock ≤ 5 resaltado</span>';
+  }
+  $('i-q').addEventListener('input',renderInv);
+
+  // Ventas
+  function renderVen(){
+    var last=ventas.slice(-10).reverse(), html='';
+    last.forEach(function(v){
+      html+='<tr><td>'+esc(v.fecha)+'</td><td>'+esc(v.codigo)+'</td><td>'+esc(v.nombre)+'</td><td class="n">'+v.cant+'</td></tr>';
+    });
+    $('v-tb').innerHTML=html;$('v-em').hidden=last.length>0;
+  }
+  $('v-ok').addEventListener('click',function(){
+    var c=norm($('v-cod').value), q=parseInt($('v-can').value,10);
+    if(!c)return msg('v-msg','Ingrese el código del producto.');
+    var p=prods[c];
+    if(!p)return msg('v-msg','No existe un producto con el código '+c+'.');
+    if(!(q>0))return msg('v-msg','Ingrese una cantidad válida (mayor a 0).');
+    if(q>p.stock)return msg('v-msg','Stock insuficiente: solo hay '+p.stock+' unidades de «'+p.nombre+'».');
+    p.stock-=q;
+    ventas.push({fecha:new Date().toLocaleString('es'),codigo:c,nombre:p.nombre,cant:q});
+    if(ventas.length>500)ventas=ventas.slice(-500);
+    save();
+    msg('v-msg','✔ Venta registrada: '+q+' × «'+p.nombre+'». Stock restante: '+p.stock,true);
+    $('v-cod').value='';$('v-can').value='1';$('v-hint').textContent='';
+    renderVen();$('v-cod').focus();
+  });
+
+  // Enter para enviar
+  [['r-cod','r-ok'],['r-nom','r-ok'],['r-can','r-ok'],['r-pre','r-ok'],['v-cod','v-ok'],['v-can','v-ok']].forEach(function(a){
+    $(a[0]).addEventListener('keydown',function(e){if(e.key==='Enter')$(a[1]).click()});
+  });
+})();
+</script>
+</body>
+</html>
